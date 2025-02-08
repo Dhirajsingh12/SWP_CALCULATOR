@@ -1,0 +1,182 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8"></meta>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"></meta>
+    <title>SWP Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .calculator {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px 0;
+            width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>SWP Calculator</h2>
+        
+        <div class="input-group">
+            <label>Initial Investment (₹):</label>
+            <input id="principal" type="number" value="1000000" />
+        </div>
+
+        <div class="input-group">
+            <label>Withdrawal Amount (₹):</label>
+            <input id="withdrawal" type="number" value="10000" />
+        </div>
+
+        <div class="input-group">
+            <label>Withdrawal Frequency:</label>
+            <select id="frequency">
+                <option value="12">Monthly</option>
+                <option value="4">Quarterly</option>
+                <option value="2">Semi-Annual</option>
+                <option value="1">Annual</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Annual Interest Rate (%):</label>
+            <input id="rate" step="0.1" type="number" value="8" />
+        </div>
+
+        <div class="input-group">
+            <label>Tenure:</label>
+            <input id="years" type="number" value="10" />
+            <select id="tenureUnit">
+                <option value="years">Years</option>
+                <option value="months">Months</option>
+            </select>
+        </div>
+
+        <button onclick="calculateSWP()">Calculate</button>
+
+        <div class="results">
+            <h3>Results:</h3>
+            <p>Total Withdrawals: ₹<span id="totalWithdrawals">0</span></p>
+            <p>Interest Earned: ₹<span id="totalInterest">0</span></p>
+            <p>Remaining Corpus: ₹<span id="remainingCorpus">0</span></p>
+            
+            <h4>Year-wise Breakdown:</h4>
+            <table id="breakdownTable">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Withdrawal</th>
+                        <th>Interest</th>
+                        <th>Remaining Corpus</th>
+                    </tr>
+                </thead>
+                <tbody id="breakdownBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function calculateSWP() {
+            // Get input values
+            const principal = parseFloat(document.getElementById('principal').value);
+            const withdrawalAmount = parseFloat(document.getElementById('withdrawal').value);
+            const frequency = parseInt(document.getElementById('frequency').value);
+            const annualRate = parseFloat(document.getElementById('rate').value) / 100;
+            let tenure = parseFloat(document.getElementById('years').value);
+            const tenureUnit = document.getElementById('tenureUnit').value;
+
+            // Convert tenure to months if needed
+            if (tenureUnit === 'years') {
+                tenure *= 12;
+            }
+
+            // Calculate periods and rate per period
+            const ratePerPeriod = annualRate / frequency;
+            const totalPeriods = Math.floor(tenure / (12 / frequency));
+
+            // Initialize variables
+            let remainingCorpus = principal;
+            let totalWithdrawals = 0;
+            let totalInterest = 0;
+            let breakdownHTML = '';
+
+            // Calculate withdrawals and interest
+            for (let i = 1; i <= totalPeriods; i++) {
+                const interest = remainingCorpus * ratePerPeriod;
+                totalInterest += interest;
+                remainingCorpus += interest;
+                
+                // Apply withdrawal
+                if (remainingCorpus >= withdrawalAmount) {
+                    remainingCorpus -= withdrawalAmount;
+                    totalWithdrawals += withdrawalAmount;
+                } else {
+                    totalWithdrawals += remainingCorpus;
+                    remainingCorpus = 0;
+                    break;
+                }
+
+                // Add to table (show yearly breakdown)
+                if (i % (frequency === 12 ? 12 : frequency) === 0) {
+                    breakdownHTML += `
+                        <tr>
+                            <td>Year ${i / frequency}</td>
+                            <td>₹${(withdrawalAmount * frequency).toFixed(2)}</td>
+                            <td>₹${interest.toFixed(2)}</td>
+                            <td>₹${remainingCorpus.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            // Update results
+            document.getElementById('totalWithdrawals').textContent = totalWithdrawals.toFixed(2);
+            document.getElementById('totalInterest').textContent = totalInterest.toFixed(2);
+            document.getElementById('remainingCorpus').textContent = remainingCorpus.toFixed(2);
+            document.getElementById('breakdownBody').innerHTML = breakdownHTML;
+        }
+    </script>
+</body>
+</html>
